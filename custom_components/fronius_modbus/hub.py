@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import asyncio
 from datetime import timedelta
 from typing import Optional
 from importlib.metadata import version
@@ -41,8 +42,11 @@ class Hub:
     def toggle_busy(func):
         async def wrapper(self, *args, **kwargs):
             if self._busy:
-                #_LOGGER.debug(f"skip {func.__name__} hub busy") 
-                return
+                if func.__name__ == "async_refresh_modbus_data":
+                    #_LOGGER.debug(f"skip {func.__name__} hub busy")
+                    return
+                while self._busy:
+                    await asyncio.sleep(0.1)
             self._busy = True
             error = None
             try:
@@ -261,7 +265,7 @@ class Hub:
 
     @toggle_busy
     async def set_discharge_limit(self, value):
-        await self._client.set_charge_limit(value)
+        await self._client.set_discharge_limit(value)
 
     @toggle_busy
     async def set_grid_charge_power(self, value):
