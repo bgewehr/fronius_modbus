@@ -15,6 +15,7 @@ from .froniusmodbusclient import FroniusModbusClient
 
 from .const import (
     DOMAIN,
+    STORAGE_EXT_CONTROL_MODE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -138,6 +139,12 @@ class Hub:
             self._unsub_interval_method = None
             self.close()
 
+    @callback
+    def async_update_entities(self):
+        """Push updated hub data to all registered entities."""
+        for update_callback in self._entities:
+            update_callback()
+
     @toggle_busy
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> dict:
         """Time to update."""
@@ -193,8 +200,7 @@ class Hub:
 
 
         if update_result:
-            for update_callback in self._entities:
-                update_callback()
+            self.async_update_entities()
 
     @toggle_busy
     async def test_connection(self) -> bool:
@@ -254,25 +260,33 @@ class Hub:
             await self._client.set_block_charge_mode()
         elif mode == 8:
             await self._client.set_calibrate_mode()
+        if mode in STORAGE_EXT_CONTROL_MODE:
+            self._client.data['ext_control_mode'] = STORAGE_EXT_CONTROL_MODE[mode]
+        self.async_update_entities()
 
     @toggle_busy
     async def set_minimum_reserve(self, value):
         await self._client.set_minimum_reserve(value)
+        self.async_update_entities()
 
     @toggle_busy
     async def set_charge_limit(self, value):
         await self._client.set_charge_limit(value)
+        self.async_update_entities()
 
     @toggle_busy
     async def set_discharge_limit(self, value):
         await self._client.set_discharge_limit(value)
+        self.async_update_entities()
 
     @toggle_busy
     async def set_grid_charge_power(self, value):
         await self._client.set_grid_charge_power(value)
+        self.async_update_entities()
            
     @toggle_busy
     async def set_grid_discharge_power(self, value):
         await self._client.set_grid_discharge_power(value)
+        self.async_update_entities()
 
 

@@ -98,7 +98,6 @@ class FroniusModbusNumber(FroniusModbusBaseEntity, NumberEntity):
             await self._hub.set_grid_discharge_power(value)
 
         #_LOGGER.debug(f"Number {self._key} set to {value}")
-        self.async_write_ha_state()
 
     @property
     def available(self) -> bool:
